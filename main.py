@@ -63,5 +63,5 @@ def main():
 
   print(merged_json)
 
-if __name__ == "__main__":
-  main()
+# if __name__ == "__main__":
+#   main()
