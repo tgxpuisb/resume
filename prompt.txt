@@ -8,6 +8,74 @@ f"请根据以下简历内容回答问题：\n{pdf_text}\n\n问题"
 
 请告诉我候选人的工作年限返回格式为{"work_year": number}，如果候选人在简历内直接写明工作年限则直接使用，如果候选人没有写明，则根据候选人的第一份工作和最后一份的时间间隔进行计算
 
-这里是一份job title 的 json 数据： [], 你的任务是根据候选人的简历总结用户的job title, 你总结的候选人job title需要是在候选人在项目中主要从事的内容，请给出最多不超过5个job title，以我给你的数据解构返回
+这里是一份job title 的 json 数据：[{"id":13,"name":"Admin"},{"id":12,"name":"Android Engineer"},{"id":3,"name":"Back-end Engineer"},{"id":19,"name":"Business Dev Rep"},{"id":23,"name":"CV"},{"id":28,"name":"Data Scientist"},{"id":18,"name":"DevOps Engineer"},{"id":2,"name":"Front-end Engineer"},{"id":17,"name":"Full-stack Engineer"},{"id":15,"name":"HR"},{"id":16,"name":"HRBP"},{"id":11,"name":"IOS Engineer"},{"id":14,"name":"IT"},{"id":22,"name":"ML Engineer"},{"id":26,"name":"Mobile Engineer"},{"id":21,"name":"NLP"},{"id":20,"name":"OPS"},{"id":4,"name":"Product Manager"},{"id":7,"name":"Project Manager"},{"id":8,"name":"QA"},{"id":9,"name":"QA Lead"},{"id":5,"name":"Software Architecture"},{"id":24,"name":"SRE Engr"},{"id":6,"name":"Team Lead"},{"id":10,"name":"UI Design Lead"},{"id":1,"name":"UI Designer"},{"id":25,"name":"UX"},{"id":27,"name":"Web3 Researcher"}], 你的任务是根据候选人的简历总结用户的job title, 你总结的候选人job title需要是在候选人在项目中主要从事的内容，请给出最多不超过5个job title，以 {"titles": []} 的数据结构返回
 
 f"为候选人总结一个英文的 tagline 格式为 {"tagline": "tagline detail"}，Although all kinds of content can be employed as a tagline, here are some general types of taglines you might want to use: \n 1.A philosophy mini-statement or personal description \n 2.One or more achievements each described separately \n3.A mini achievement summarizing career-long accomplishments\n\n"
+
+为候选人的简历写一个英文的 summary, A resume summary statement is a two- to three-sentence professional introduction that you can add at the top of your resume to highlight your most valuable skills and experiences. The resume summary can help employers quickly learn whether you have the skills and background they require. summary 格式为 {"self_introduce": "summary content"} 其中 summary content 可以是一个由<ol><li></li></ol>组成的有序列表的html字符串
+
+'这是一份公司信息技术的技能列表: [{"i":8,"n":"React","t":"Front End"},{"i":9,"n":"Visual Basic","t":"Front End"},{"i":10,"n":"JavaScript","t":"Front End"},{"i":11,"n":"Swift","t":"Front End"},{"i":12,"n":"HTML5","t":"Front End"},{"i":13,"n":"Angular","t":"Front End"},{"i":14,"n":"Flutter","t":"Front End"},{"i":15,"n":"Bootstrap","t":"Front End"},{"i":16,"n":"Layui","t":"Front End"},{"i":17,"n":"Vue.js","t":"Front End"},{"i":28,"n":"Objective-C","t":"Front End"},{"i":57,"n":"After Effects","t":"Front End"},{"i":58,"n":"Illustrator","t":"Front End"},{"i":59,"n":"Photoshop","t":"Front End"},{"i":60,"n":"XD","t":"Front End"},{"i":61,"n":"Sketch","t":"Front End"},{"i":62,"n":"Figma","t":"Front End"},{"i":63,"n":"Principle","t":"Front End"},{"i":64,"n":"Firebase","t":"Front End"},{"i":95,"n":"React Native","t":"Front End"},{"i":96,"n":"RxSwift","t":"Front End"},{"i":109,"n":"Swiftui","t":"Front End"},{"i":110,"n":"Combine","t":"Front End"},{"i":111,"n":"Mobile media","t":"Front End"},{"i":112,"n":"Android Framework","t":"Front End"},{"i":113,"n":"Java","t":"Front End"},{"i":114,"n":"Kotlin","t":"Front End"},{"i":115,"n":"Cocoa Touch","t":"Front End"},{"i":137,"n":"Elixir","t":"Front End"},{"i":7,"n":"Java","t":"Back End"},{"i":18,"n":"C","t":"Back End"},{"i":19,"n":"Python","t":"Back End"},{"i":20,"n":"C++","t":"Back End"},{"i":21,"n":"C#","t":"Back End"},{"i":22,"n":"R","t":"Back End"},{"i":23,"n":"PHP","t":"Back End"},{"i":24,"n":"SQL","t":"Back End"},{"i":25,"n":"Go","t":"Back End"},{"i":26,"n":"Perl","t":"Back End"},{"i":27,"n":"TypeScript","t":"Back End"},{"i":29,"n":"Kotlin","t":"Back End"},{"i":30,"n":"Node js","t":"Back End"},{"i":31,"n":"Mysql","t":"Back End"},{"i":32,"n":"Oracle","t":"Back End"},{"i":33,"n":"SQL Server","t":"Back End"},{"i":34,"n":"Sybase","t":"Back End"},{"i":35,"n":"DB2","t":"Back End"},{"i":36,"n":"Mongodb","t":"Back End"},{"i":37,"n":"Cassandra","t":"Back End"},{"i":38,"n":"CouchDB","t":"Back End"},{"i":39,"n":"Redis","t":"Back End"},{"i":40,"n":"Membase","t":"Back End"},{"i":41,"n":"HBase","t":"Back End"},{"i":42,"n":"Express","t":"Back End"},{"i":43,"n":"GraphQL","t":"Back End"},{"i":44,"n":"Laravel","t":"Back End"},{"i":45,"n":"CakePHP","t":"Back End"},{"i":46,"n":"Django","t":"Back End"},{"i":47,"n":"Ruby on Rails","t":"Back End"},{"i":48,"n":"Flask","t":"Back End"},{"i":49,"n":"Phoenix","t":"Back End"},{"i":50,"n":"Spring Boot","t":"Back End"},{"i":51,"n":"Robot Frame","t":"Back End"},{"i":52,"n":"Web Driver","t":"Back End"},{"i":53,"n":"TestNG","t":"Back End"},{"i":54,"n":"Appium","t":"Back End"},{"i":55,"n":"Jenkins","t":"Back End"},{"i":56,"n":"Docker","t":"Back End"},{"i":65,"n":"Hadoop","t":"Back End"},{"i":66,"n":"Hive","t":"Back End"},{"i":67,"n":"Spark","t":"Back End"},{"i":68,"n":"Storm","t":"Back End"},{"i":69,"n":"Flink","t":"Back End"},{"i":70,"n":"Flume","t":"Back End"},{"i":71,"n":"Elasticsearch","t":"Back End"},{"i":77,"n":"GitOps","t":"Back End"},{"i":97,"n":"Kafka","t":"Back End"},{"i":98,"n":"Zookeeper","t":"Back End"},{"i":99,"n":"Vertica","t":"Back End"},{"i":116,"n":"Computer Visoon(CV)","t":"Back End"},{"i":117,"n":"Natural language processing（NLP)","t":"Back End"},{"i":118,"n":"Reinforcement Learning(RL)","t":"Back End"},{"i":119,"n":"Tensorflow","t":"Back End"},{"i":120,"n":"Pytorch","t":"Back End"},{"i":121,"n":"Opencv","t":"Back End"},{"i":122,"n":"Langchain","t":"Back End"},{"i":123,"n":"TensorRT","t":"Back End"},{"i":124,"n":"LLM","t":"Back End"},{"i":133,"n":"Rust","t":"Back End"},{"i":136,"n":"Elixir","t":"Back End"},{"i":1,"n":"Communication","t":"Soft Skills"},{"i":3,"n":"Leadership","t":"Soft Skills"},{"i":4,"n":"Management","t":"Soft Skills"},{"i":5,"n":"Creative","t":"Soft Skills"},{"i":6,"n":"Execution","t":"Soft Skills"},{"i":72,"n":"Ethereum","t":"Web3"},{"i":73,"n":"Solana","t":"Web3"},{"i":74,"n":"Solidity","t":"Web3"},{"i":75,"n":"Vyper","t":"Web3"},{"i":76,"n":"The Graph","t":"Web3"},{"i":100,"n":"Hardhat","t":"Web3"},{"i":101,"n":"Truffle","t":"Web3"},{"i":102,"n":"Mocha","t":"Web3"},{"i":103,"n":"web3.js","t":"Web3"},{"i":104,"n":"ethers.js","t":"Web3"},{"i":105,"n":"Alchemy","t":"Web3"},{"i":106,"n":"Infura","t":"Web3"},{"i":107,"n":"Tenderly","t":"Web3"},{"i":108,"n":"Defender","t":"Web3"},{"i":78,"n":"Catch Requirement","t":"QA Skills"},{"i":79,"n":"Design Test Case","t":"QA Skills"},{"i":80,"n":"Execute Test Case","t":"QA Skills"},{"i":81,"n":"Defect Tracking","t":"QA Skills"},{"i":82,"n":"Design Test Plan","t":"QA Skills"},{"i":83,"n":"Report Test Result","t":"QA Skills"},{"i":84,"n":"Write Manual","t":"QA Skills"},{"i":85,"n":"Automation Test","t":"QA Skills"},{"i":86,"n":"Risk Management","t":"QA Skills"},{"i":87,"n":"Reproduce Live Issues","t":"QA Skills"},{"i":88,"n":"UE (UX) Design","t":"PM Skills"},{"i":89,"n":"Data Analysis","t":"PM Skills"},{"i":90,"n":"Market Research","t":"PM Skills"},{"i":91,"n":"Business Strategy","t":"PM Skills"},{"i":92,"n":"Customer Development","t":"PM Skills"},{"i":93,"n":"Agile Methodologies","t":"PM Skills"},{"i":94,"n":"Project Management","t":"PM Skills"},{"i":125,"n":"AWS","t":"DevOps"},{"i":126,"n":"Azure","t":"DevOps"},{"i":127,"n":"GCP","t":"DevOps"},{"i":128,"n":"Ali Cloud","t":"DevOps"},{"i":129,"n":"Kubernetes","t":"DevOps"},{"i":130,"n":"Helm","t":"DevOps"},{"i":131,"n":"Docker","t":"DevOps"},{"i":132,"n":"Terraform","t":"DevOps"},{"i":134,"n":"Jenkins","t":"DevOps"},{"i":135,"n":"CircleCI","t":"DevOps"}], 这份数据中字段"i"表示技能id,字段n表示技能名称,字段t表示字段所属的大类别\n你的任务是结合候选人简历对候选人的信息技术技能进行评级,评级级别为1-5的正整数熟练程度随着数字增大而增大,1代表候选人只是使用过该技术3代表候选人对技术比较熟练5代表候选人精通该项技术并熟悉这项技术的运行原理\n注意: 如果候选人简历中没有提到公司技术列表中的技术则不需要评级,请以该格式 {"skills": [{id: "number", name: "name", "type": "大类别", "level": "评级"}]} 输出有评级的信息'
+
+"""
+Please summarize the candidate's work experiences and projects in each work experience, I will use Typescript type declarations and annotations to describe the data structure:
+type workExperiences = {
+  experiences: Array<{
+    where: string // The company the candidate works for  translate to english
+    from: string // Candidate's employment start date
+    to: string // The end time of the candidate's employment
+    mainly_as: string // The candidate's job level or position  translate to english
+    description: string // Description and summary of the candidate's work in the company. If the content involves multiple items and is independent of each other, you can use an html string description consisting of an ordered list of <ol><li></li></ol>
+  }>
+}
+Note: The resume may be written in Chinese, and the summary needs to be translated into English
+"""
+
+"""
+Here is a list of company information technology skills: ["React","Visual Basic","JavaScript","Swift","HTML5","Angular","Flutter","Bootstrap","Layui","Vue.js","Objective-C","After Effects","Illustrator","Photoshop","XD","Sketch","Figma","Principle","Firebase","React Native","RxSwift","Swiftui","Combine","Mobile media","Android Framework","Java","Kotlin","Cocoa Touch","Elixir","C","Python","C++","C#","R","PHP","SQL","Go","Perl","TypeScript","Node js","Mysql","Oracle","SQL Server","Sybase","DB2","Mongodb","Cassandra","CouchDB","Redis","Membase","HBase","Express","GraphQL","Laravel","CakePHP","Django","Ruby on Rails","Flask","Phoenix","Spring Boot","Robot Frame","Web Driver","TestNG","Appium","Jenkins","Docker","Hadoop","Hive","Spark","Storm","Flink","Flume","Elasticsearch","GitOps","Kafka","Zookeeper","Vertica","Computer Visoon(CV)","Natural language processing（NLP)","Reinforcement Learning(RL)","Tensorflow","Pytorch","Opencv","Langchain","TensorRT","LLM","Rust","Communication","Leadership","Management","Creative","Execution","Ethereum","Solana","Solidity","Vyper","The Graph","Hardhat","Truffle","Mocha","web3.js","ethers.js","Alchemy","Infura","Tenderly","Defender","Catch Requirement","Design Test Case","Execute Test Case","Defect Tracking","Design Test Plan","Report Test Result","Write Manual","Automation Test","Risk Management","Reproduce Live Issues","UE (UX) Design","Data Analysis","Market Research","Business Strategy","Customer Development","Agile Methodologies","Project Management","AWS","Azure","GCP","Ali Cloud","Kubernetes","Helm","Terraform","CircleCI"]
+Your task is to summarize all the projects that the candidate has participated in at 美团 company, I will use Typescript type declarations and annotations to describe the data structure:
+Array<{
+  name: string // Project Name  translate to english
+  title: string // The candidate's job level or position  translate to english
+  tech: Array<string> // A list of the candidate's IT skills, search the company's IT skills list
+  description: string // The candidate's description and summary of the project. If the content involves multiple items and is independent of each other, you can use an HTML string description consisting of an ordered list of <ol><li></li></ol>
+}>
+Note: The resume may be written in Chinese, and the summary needs to be translated into English
+"""
+
+"""
+Please summarize the educations in the candidate's resume., I will use Typescript type declarations and annotations to describe the data structure:
+type educations = {
+  educations: Array<{
+    where: string // Where the candidate received his or her education translate to english
+    degree: string // degree  translate to english
+    from: string // The time when the candidate's education started  translate to english
+    to: string // The time when the candidate's education ended translate to english
+    mainly_as: string // college major translate to english
+  }>
+}
+Note: The resume may be written in Chinese, and the summary needs to be translated into English
+"""
+
+"""
+Summary of candidate patents, in the format {"patents": "string"}, If the content involves multiple items, you can use an HTML string description consisting of an ordered list of <ol><li></li></ol>
+Note: if candidate has no Patents give the empty string
+Note: The resume may be written in Chinese, and the summary needs to be translated into English
+"""
+
+"""
+To summarize the user's English speaking level, the following is the scoring criteria:
+1=Can recognize and understand very basic words and simple, familiar phrases. Able to write simple isolated phrases and sentences. 2=Can read and understand short, simple texts. Capable of producing basic sentences, writing brief notes and messages related to immediate needs. 3=Can read straightforward information within a known area and write connected text on topics that are familiar or of personal interest. 4=Able to read and write texts about various topics. Can understand the main ideas of complex text and produce clear, detailed writing on a wide range of subjects. 5=Proficient in reading and writing complex texts. Capable of understanding implicit meanings and producing sophisticated and well-structured writing on complex subjects.
+Note: in the format {"en_speaking_level": number or null}
+Note: If the candidate does not specify this ability, null is returned.
+"""
+
+"""
+To summarize the user's English read and write level, the following is the scoring criteria:
+1=Can use simple phrases and sentences to communicate basic needs in familiar contexts. Interaction is limited to slow speech and repetition.
+2=Able to engage in simple conversation on familiar topics with some assistance. Can ask and answer basic questions and use common expressions.
+3=Can handle short, routine exchanges without disruption. Able to communicate in simple and direct exchanges of information on familiar tasks and topics.
+4=Can communicate with some confidence on familiar routine and non-routine matters. Able to express personal opinions but sometimes requires assistance for more complex conversation.
+5=Fully fluent and comfortable in any situation. Can engage in nuanced, complex conversations, understanding slang, idioms, and cultural references.
+Note: in the format {"en_read_write_level": number or null}
+Note: If the candidate does not specify this ability, null is returned.
+"""
