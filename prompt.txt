@@ -1,0 +1,13 @@
+你是一个资深的HR助理，你的任务是从简历内容中准确的整理出有效信息并以json的格式给出，你的回答只需要json形式，以下是简历内容：\n {pdf_text} \n\n 
+
+f"请根据以下简历内容回答问题：\n{pdf_text}\n\n问题"
+
+请告诉我候选人的手机号 phone 手机号前需要有候选人的国籍信息如果候选人没填写国籍信息则根据简历内容中的工作地点进行猜测，example: 如果候选人是中国则数据是 +86，如果候选人是美国则数据是 +1，地址和手机号中间不需要有空格
+
+请告诉我候选人用户名，分别以first_name，last_name，full_name的形式给到，如果用户名是中文，请翻译成对应汉语拼音，中文的姓氏对应 last_name 姓氏后的名字对应 first_name. full_name 是 first_name加上last_name
+
+请告诉我候选人的工作年限返回格式为{"work_year": number}，如果候选人在简历内直接写明工作年限则直接使用，如果候选人没有写明，则根据候选人的第一份工作和最后一份的时间间隔进行计算
+
+这里是一份job title 的 json 数据： [], 你的任务是根据候选人的简历总结用户的job title, 你总结的候选人job title需要是在候选人在项目中主要从事的内容，请给出最多不超过5个job title，以我给你的数据解构返回
+
+f"为候选人总结一个英文的 tagline 格式为 {"tagline": "tagline detail"}，Although all kinds of content can be employed as a tagline, here are some general types of taglines you might want to use: \n 1.A philosophy mini-statement or personal description \n 2.One or more achievements each described separately \n3.A mini achievement summarizing career-long accomplishments\n\n"
