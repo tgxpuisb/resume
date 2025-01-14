@@ -19,8 +19,9 @@ DEFAULT_EMPTY_RESPONSES = {
     "patents": {"patents": ""},
     "en_speaking_level": {"en_speaking_level": None},
     "en_read_write_level": {"en_read_write_level": None},
-    "company_skills_rating": {"skills": []},
+    "projects": {"projects": []}
 }
+        
 app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = './uploads'
@@ -93,7 +94,7 @@ PROMPTS = {
         "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
         "The return format only needs to be in JSON format, example: {{\"experiences\": [{{\"where\": \"\", \"from\": \"\", \"to\": \"\", \"mainly_as\": \"\", \"description\": \"\"}}]}}"
     ),
-    "company_skills_rating": (
+    "skills": (
         "Here is a list of skills for company information technology:"
         "[{{\"i\":8,\"n\":\"React\",\"t\":\"Front End\"}}, {{\"i\":9,\"n\":\"Visual Basic\",\"t\":\"Front End\"}}, {{\"i\":10,\"n\":\"JavaScript\",\"t\":\"Front End\"}}, "
         "{{\"i\":11,\"n\":\"Swift\",\"t\":\"Front End\"}}, {{\"i\":12,\"n\":\"HTML5\",\"t\":\"Front End\"}}, {{\"i\":13,\"n\":\"Angular\",\"t\":\"Front End\"}}, "
@@ -146,7 +147,6 @@ PROMPTS = {
         "1 means the candidate has only used the technology, 3 means the candidate is relatively proficient in the technology, and 5 means the candidate is proficient in the technology and familiar with how it works."
         "Note: If the candidate's resume does not mention any technology from the company's technology list, no rating is required."
         "The return format only needs to be in JSON format, example: {{\"skills\": [{{\"id\": \"number\", \"name\": \"name\", \"type\": \"\", \"level\": 3}}]}}。"
-        "如果没有需要评级的技能，请返回{{\"skills\": []}}。"
     ),
     "educations": (
         "your task is summarize the candidate's educational experience. The following is a description of the data structure:\n"
@@ -187,6 +187,66 @@ PROMPTS = {
         "5=Fully fluent and comfortable in any situation. Can engage in nuanced, complex conversations, understanding slang, idioms, and cultural references.\n"
         "The return format only needs to be in JSON format, example: {{\"en_read_write_level\": number or null}}。"
         "Note: If the candidate does not specify this ability, null is returned。"
+    ),
+    "projects": (
+        "Here is a list of skills for company information technology:"
+        "[{{\"i\":8,\"n\":\"React\",\"t\":\"Front End\"}}, {{\"i\":9,\"n\":\"Visual Basic\",\"t\":\"Front End\"}}, {{\"i\":10,\"n\":\"JavaScript\",\"t\":\"Front End\"}}, "
+        "{{\"i\":11,\"n\":\"Swift\",\"t\":\"Front End\"}}, {{\"i\":12,\"n\":\"HTML5\",\"t\":\"Front End\"}}, {{\"i\":13,\"n\":\"Angular\",\"t\":\"Front End\"}}, "
+        "{{\"i\":14,\"n\":\"Flutter\",\"t\":\"Front End\"}}, {{\"i\":15,\"n\":\"Bootstrap\",\"t\":\"Front End\"}}, {{\"i\":16,\"n\":\"Layui\",\"t\":\"Front End\"}}, "
+        "{{\"i\":17,\"n\":\"Vue.js\",\"t\":\"Front End\"}}, {{\"i\":28,\"n\":\"Objective-C\",\"t\":\"Front End\"}}, {{\"i\":57,\"n\":\"After Effects\",\"t\":\"Front End\"}}, "
+        "{{\"i\":58,\"n\":\"Illustrator\",\"t\":\"Front End\"}}, {{\"i\":59,\"n\":\"Photoshop\",\"t\":\"Front End\"}}, {{\"i\":60,\"n\":\"XD\",\"t\":\"Front End\"}}, "
+        "{{\"i\":61,\"n\":\"Sketch\",\"t\":\"Front End\"}}, {{\"i\":62,\"n\":\"Figma\",\"t\":\"Front End\"}}, {{\"i\":63,\"n\":\"Principle\",\"t\":\"Front End\"}}, "
+        "{{\"i\":64,\"n\":\"Firebase\",\"t\":\"Front End\"}}, {{\"i\":95,\"n\":\"React Native\",\"t\":\"Front End\"}}, {{\"i\":96,\"n\":\"RxSwift\",\"t\":\"Front End\"}}, "
+        "{{\"i\":109,\"n\":\"Swiftui\",\"t\":\"Front End\"}}, {{\"i\":110,\"n\":\"Combine\",\"t\":\"Front End\"}}, {{\"i\":111,\"n\":\"Mobile media\",\"t\":\"Front End\"}}, "
+        "{{\"i\":112,\"n\":\"Android Framework\",\"t\":\"Front End\"}}, {{\"i\":114,\"n\":\"Kotlin\",\"t\":\"Front End\"}}, "
+        "{{\"i\":115,\"n\":\"Cocoa Touch\",\"t\":\"Front End\"}}, {{\"i\":137,\"n\":\"Elixir\",\"t\":\"Front End\"}}, {{\"i\":7,\"n\":\"Java\",\"t\":\"Back End\"}}, "
+        "{{\"i\":18,\"n\":\"C\",\"t\":\"Back End\"}}, {{\"i\":19,\"n\":\"Python\",\"t\":\"Back End\"}}, {{\"i\":20,\"n\":\"C++\",\"t\":\"Back End\"}}, "
+        "{{\"i\":21,\"n\":\"C#\",\"t\":\"Back End\"}}, {{\"i\":22,\"n\":\"R\",\"t\":\"Back End\"}}, {{\"i\":23,\"n\":\"PHP\",\"t\":\"Back End\"}}, "
+        "{{\"i\":24,\"n\":\"SQL\",\"t\":\"Back End\"}}, {{\"i\":25,\"n\":\"Go\",\"t\":\"Back End\"}}, {{\"i\":26,\"n\":\"Perl\",\"t\":\"Back End\"}}, "
+        "{{\"i\":27,\"n\":\"TypeScript\",\"t\":\"Back End\"}}, {{\"i\":29,\"n\":\"Kotlin\",\"t\":\"Back End\"}}, {{\"i\":30,\"n\":\"Node js\",\"t\":\"Back End\"}}, "
+        "{{\"i\":31,\"n\":\"Mysql\",\"t\":\"Back End\"}}, {{\"i\":32,\"n\":\"Oracle\",\"t\":\"Back End\"}}, {{\"i\":33,\"n\":\"SQL Server\",\"t\":\"Back End\"}}, "
+        "{{\"i\":34,\"n\":\"Sybase\",\"t\":\"Back End\"}}, {{\"i\":35,\"n\":\"DB2\",\"t\":\"Back End\"}}, {{\"i\":36,\"n\":\"Mongodb\",\"t\":\"Back End\"}}, "
+        "{{\"i\":37,\"n\":\"Cassandra\",\"t\":\"Back End\"}}, {{\"i\":38,\"n\":\"CouchDB\",\"t\":\"Back End\"}}, {{\"i\":39,\"n\":\"Redis\",\"t\":\"Back End\"}}, "
+        "{{\"i\":40,\"n\":\"Membase\",\"t\":\"Back End\"}}, {{\"i\":41,\"n\":\"HBase\",\"t\":\"Back End\"}}, {{\"i\":42,\"n\":\"Express\",\"t\":\"Back End\"}}, "
+        "{{\"i\":43,\"n\":\"GraphQL\",\"t\":\"Back End\"}}, {{\"i\":44,\"n\":\"Laravel\",\"t\":\"Back End\"}}, {{\"i\":45,\"n\":\"CakePHP\",\"t\":\"Back End\"}}, "
+        "{{\"i\":46,\"n\":\"Django\",\"t\":\"Back End\"}}, {{\"i\":47,\"n\":\"Ruby on Rails\",\"t\":\"Back End\"}}, {{\"i\":48,\"n\":\"Flask\",\"t\":\"Back End\"}}, "
+        "{{\"i\":49,\"n\":\"Phoenix\",\"t\":\"Back End\"}}, {{\"i\":50,\"n\":\"Spring Boot\",\"t\":\"Back End\"}}, {{\"i\":51,\"n\":\"Robot Frame\",\"t\":\"Back End\"}}, "
+        "{{\"i\":52,\"n\":\"Web Driver\",\"t\":\"Back End\"}}, {{\"i\":53,\"n\":\"TestNG\",\"t\":\"Back End\"}}, {{\"i\":54,\"n\":\"Appium\",\"t\":\"Back End\"}}, "
+        "{{\"i\":55,\"n\":\"Jenkins\",\"t\":\"Back End\"}}, {{\"i\":56,\"n\":\"Docker\",\"t\":\"Back End\"}}, {{\"i\":65,\"n\":\"Hadoop\",\"t\":\"Back End\"}}, "
+        "{{\"i\":66,\"n\":\"Hive\",\"t\":\"Back End\"}}, {{\"i\":67,\"n\":\"Spark\",\"t\":\"Back End\"}}, {{\"i\":68,\"n\":\"Storm\",\"t\":\"Back End\"}}, "
+        "{{\"i\":69,\"n\":\"Flink\",\"t\":\"Back End\"}}, {{\"i\":70,\"n\":\"Flume\",\"t\":\"Back End\"}}, {{\"i\":71,\"n\":\"Elasticsearch\",\"t\":\"Back End\"}}, "
+        "{{\"i\":77,\"n\":\"GitOps\",\"t\":\"Back End\"}}, {{\"i\":97,\"n\":\"Kafka\",\"t\":\"Back End\"}}, {{\"i\":98,\"n\":\"Zookeeper\",\"t\":\"Back End\"}}, "
+        "{{\"i\":99,\"n\":\"Vertica\",\"t\":\"Back End\"}}, {{\"i\":116,\"n\":\"Computer Visoon(CV)\",\"t\":\"Back End\"}}, "
+        "{{\"i\":117,\"n\":\"Natural language processing（NLP)\",\"t\":\"Back End\"}}, {{\"i\":118,\"n\":\"Reinforcement Learning(RL)\",\"t\":\"Back End\"}}, "
+        "{{\"i\":119,\"n\":\"Tensorflow\",\"t\":\"Back End\"}}, {{\"i\":120,\"n\":\"Pytorch\",\"t\":\"Back End\"}}, {{\"i\":121,\"n\":\"Opencv\",\"t\":\"Back End\"}}, "
+        "{{\"i\":122,\"n\":\"Langchain\",\"t\":\"Back End\"}}, {{\"i\":123,\"n\":\"TensorRT\",\"t\":\"Back End\"}}, {{\"i\":124,\"n\":\"LLM\",\"t\":\"Back End\"}}, "
+        "{{\"i\":133,\"n\":\"Rust\",\"t\":\"Back End\"}}, {{\"i\":136,\"n\":\"Elixir\",\"t\":\"Back End\"}}, {{\"i\":1,\"n\":\"Communication\",\"t\":\"Soft Skills\"}}, "
+        "{{\"i\":3,\"n\":\"Leadership\",\"t\":\"Soft Skills\"}}, {{\"i\":4,\"n\":\"Management\",\"t\":\"Soft Skills\"}}, {{\"i\":5,\"n\":\"Creative\",\"t\":\"Soft Skills\"}}, "
+        "{{\"i\":6,\"n\":\"Execution\",\"t\":\"Soft Skills\"}}, {{\"i\":72,\"n\":\"Ethereum\",\"t\":\"Web3\"}}, {{\"i\":73,\"n\":\"Solana\",\"t\":\"Web3\"}}, "
+        "{{\"i\":74,\"n\":\"Solidity\",\"t\":\"Web3\"}}, {{\"i\":75,\"n\":\"Vyper\",\"t\":\"Web3\"}}, {{\"i\":76,\"n\":\"The Graph\",\"t\":\"Web3\"}}, "
+        "{{\"i\":100,\"n\":\"Hardhat\",\"t\":\"Web3\"}}, {{\"i\":101,\"n\":\"Truffle\",\"t\":\"Web3\"}}, {{\"i\":102,\"n\":\"Mocha\",\"t\":\"Web3\"}}, "
+        "{{\"i\":103,\"n\":\"web3.js\",\"t\":\"Web3\"}}, {{\"i\":104,\"n\":\"ethers.js\",\"t\":\"Web3\"}}, {{\"i\":105,\"n\":\"Alchemy\",\"t\":\"Web3\"}}, "
+        "{{\"i\":106,\"n\":\"Infura\",\"t\":\"Web3\"}}, {{\"i\":107,\"n\":\"Tenderly\",\"t\":\"Web3\"}}, {{\"i\":108,\"n\":\"Defender\",\"t\":\"Web3\"}}, "
+        "{{\"i\":78,\"n\":\"Catch Requirement\",\"t\":\"QA Skills\"}}, {{\"i\":79,\"n\":\"Design Test Case\",\"t\":\"QA Skills\"}}, {{\"i\":80,\"n\":\"Execute Test Case\",\"t\":\"QA Skills\"}}, "
+        "{{\"i\":81,\"n\":\"Defect Tracking\",\"t\":\"QA Skills\"}}, {{\"i\":82,\"n\":\"Design Test Plan\",\"t\":\"QA Skills\"}}, {{\"i\":83,\"n\":\"Report Test Result\",\"t\":\"QA Skills\"}}, "
+        "{{\"i\":84,\"n\":\"Write Manual\",\"t\":\"QA Skills\"}}, {{\"i\":85,\"n\":\"Automation Test\",\"t\":\"QA Skills\"}}, {{\"i\":86,\"n\":\"Risk Management\",\"t\":\"QA Skills\"}}, "
+        "{{\"i\":87,\"n\":\"Reproduce Live Issues\",\"t\":\"QA Skills\"}}, {{\"i\":88,\"n\":\"UE (UX) Design\",\"t\":\"PM Skills\"}}, {{\"i\":89,\"n\":\"Data Analysis\",\"t\":\"PM Skills\"}}, "
+        "{{\"i\":90,\"n\":\"Market Research\",\"t\":\"PM Skills\"}}, {{\"i\":91,\"n\":\"Business Strategy\",\"t\":\"PM Skills\"}}, {{\"i\":92,\"n\":\"Customer Development\",\"t\":\"PM Skills\"}}, "
+        "{{\"i\":93,\"n\":\"Agile Methodologies\",\"t\":\"PM Skills\"}}, {{\"i\":94,\"n\":\"Project Management\",\"t\":\"PM Skills\"}}, {{\"i\":125,\"n\":\"AWS\",\"t\":\"DevOps\"}}, "
+        "{{\"i\":126,\"n\":\"Azure\",\"t\":\"DevOps\"}}, {{\"i\":127,\"n\":\"GCP\",\"t\":\"DevOps\"}}, {{\"i\":128,\"n\":\"Ali Cloud\",\"t\":\"DevOps\"}}, {{\"i\":129,\"n\":\"Kubernetes\",\"t\":\"DevOps\"}}, "
+        "{{\"i\":130,\"n\":\"Helm\",\"t\":\"DevOps\"}}, {{\"i\":131,\"n\":\"Docker\",\"t\":\"DevOps\"}}, {{\"i\":132,\"n\":\"Terraform\",\"t\":\"DevOps\"}}, "
+        "{{\"i\":134,\"n\":\"Jenkins\",\"t\":\"DevOps\"}}, {{\"i\":135,\"n\":\"CircleCI\",\"t\":\"DevOps\"}}]"
+        ".\n",
+        "your task is Summarize the projects that users have done at {company_name},The following is a description of the data structure:\n"
+        "type projects = {{\n"
+        "  projects: Array<{{\n"
+        "    name: string // the project name translate to English\n"
+        "    title: string // The position or rank held by the candidate in this project, translate to English\n"
+        "    description: string // The candidate's detailed description of the project, translate to English\n"
+        "    tech: Array<{{ \"id\": number, \"skill\": \"string\" }}> // The skills the candidate used in the project from list of skills for company information technology" 
+        "  }}>;\n"
+        "}}\n"
+        "The return format only needs to be in JSON format, example: {{\"projects\": [{{\"name\": \"\", \"title\": \"\", \"description\": \"\", \"tech\": \"}}]}}"
     )
 }
 
@@ -213,16 +273,19 @@ def call_openai(prompt, pdf_text):
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-4",  # 若没有 GPT-4 权限可改为 "gpt-3.5-turbo"
+            model="gpt-4o",  # 若没有 GPT-4 权限可改为 "gpt-3.5-turbo"
             messages=[
-                {"role": "system", "content":  "You are a senior HR assistant. Your task is to help your boss who only knows English to accurately filter out valid information from resumes and present it in JSON format."},
+                {"role": "system", "content": "You are a senior HR assistant. Your task is to help your boss who only knows English to accurately filter out valid information from resumes and present it in JSON format."},
+                {"role": "system", "content": "You work as an API, your input and output will be strictly formatted JSON  which can be directly parsed by the application. Do not enclose JSON string in markdown quotes."},
                 {"role": "user", "content": f"answer the questions based on the following resume: \n{pdf_text}\n\n"},
                 {"role": "user", "content": prompt}
             ],
-            temperature=1,
+            temperature=0.5,
             max_tokens=1024
         )
+        print('======')
         print(response.choices[0].message.content)
+        print('======')
         return response.choices[0].message.content
     except Exception as e:
         app.logger.error("OpenAI API call failed: %s", e, exc_info=True)
@@ -255,9 +318,9 @@ def upload_pdf():
     print(pdf_text_cleaned)
     results = {}
 
-    # 处理所有任务，跳过 "company_skills_rating"
+    # 处理所有任务，跳过 "projects"
     for task_name, prompt_content in PROMPTS.items():
-        if task_name == "company_skills_rating":
+        if task_name == "projects":
             continue  # 后面单独处理
 
         app.logger.debug(f"Processing task: {task_name}")
@@ -292,104 +355,31 @@ def upload_pdf():
     work_experiences = results.get("experiences", [])
     if isinstance(work_experiences, list):
         for idx, experience in enumerate(work_experiences):
-            # 提取工作描述
-            experience_description = experience.get("description", "")
-            if not experience_description:
-                app.logger.warning(f"No description found for experience {idx}, setting company_skills_rating to empty.")
-                work_experiences[idx]["company_skills_rating"] = DEFAULT_EMPTY_RESPONSES.get("company_skills_rating", {})
-                continue
-
-            # 填充 company_skills_rating Prompt
-            company_prompt_template = PROMPTS["company_skills_rating"]
+            projects_prompt_template = PROMPTS["projects"]
             try:
-                company_prompt = company_prompt_template.format(pdf_text=experience_description)
+                projects_prompt = '\n'.join(projects_prompt_template).format(company_name=experience.get("name", ""))
             except KeyError as e:
-                app.logger.error("Formatting company_skills_rating prompt failed for experience %d: %s", idx, e, exc_info=True)
-                work_experiences[idx]["company_skills_rating"] = DEFAULT_EMPTY_RESPONSES.get("company_skills_rating", {})
+                app.logger.error("Formatting projects prompt failed for experience %d: %s", idx, e, exc_info=True)
+                work_experiences[idx].update(DEFAULT_EMPTY_RESPONSES.get("projects", {}))
                 continue
-
-            app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
-
             # 调用 OpenAI API
-            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
-
+            project_response_str = call_openai(projects_prompt, pdf_text_cleaned)
+            print("=====")
+            print(project_response_str)
+            print('======')
             # 解析 JSON 响应
-            if isinstance(company_response_str, str) and company_response_str.startswith("{") and company_response_str.endswith("}"):
+            if isinstance(project_response_str, str) and project_response_str.startswith("{") and project_response_str.endswith("}"):
                 try:
-                    company_parsed_result = json.loads(company_response_str)
+                    company_parsed_result = json.loads(project_response_str)
                 except json.JSONDecodeError:
-                    app.logger.error(f"JSON decoding failed for company_skills_rating on experience {idx}. Response: {company_response_str}")
-                    company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("company_skills_rating", {})
+                    app.logger.error(f"JSON decoding failed for projects on experience {idx}. Response: {project_response_str}")
+                    company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("projects", {})
             else:
-                app.logger.error(f"Invalid response format for company_skills_rating on experience {idx}. Response: {company_response_str}")
-                company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("company_skills_rating", {})
-
-            work_experiences[idx]["company_skills_rating"] = company_parsed_result
-
-        # 更新 results 中的 work_experiences
-        results["experiences"] = work_experiences
-        for idx, experience in enumerate(work_experiences):
-            # 提取工作描述
-            experience_description = experience.get("description", "")
-            if not experience_description:
-                app.logger.warning(f"No description found for experience {idx}, skipping company_skills_rating.")
-                work_experiences[idx]["company_skills_rating"] = {"error": "No description provided."}
-                continue
-
-            # 填充 company_skills_rating Prompt
-            company_prompt_template = PROMPTS["company_skills_rating"]
-            try:
-                company_prompt = company_prompt_template.format(pdf_text=experience_description)
-            except KeyError as e:
-                app.logger.error("Formatting company_skills_rating prompt failed for experience %d: %s", idx, e, exc_info=True)
-                work_experiences[idx]["company_skills_rating"] = {"error": f"Formatting prompt failed: {str(e)}"}
-                continue
-
-            app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
-
-            # 调用 OpenAI API
-            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
-
-            # 解析 JSON 响应
-            if isinstance(company_response_str, str) and company_response_str.startswith("{") and company_response_str.endswith("}"):
-                try:
-                    company_parsed_result = json.loads(company_response_str)
-                except json.JSONDecodeError:
-                    app.logger.error("JSON decoding failed for company_skills_rating on experience %d", idx)
-                    company_parsed_result = {"error": "Invalid JSON response"}
-            else:
-                company_parsed_result = {"error": "Invalid JSON response"}
-
-            work_experiences[idx]["company_skills_rating"] = company_parsed_result
-
-        # 更新 results 中的 work_experiences
-        results["experiences"] = work_experiences
-
-        for idx, experience in enumerate(work_experiences):
-            # Extract the description of the experience
-            experience_description = experience.get("description", "")
-            if not experience_description:
-                app.logger.warning(f"No description found for experience {idx}, skipping company_skills_rating.")
-                work_experiences[idx]["company_skills_rating"] = {"error": "No description provided."}
-                continue
-
-            # Prepare the prompt for company_skills_rating by filling in the description
-            company_prompt = PROMPTS["company_skills_rating"].format(pdf_text=experience_description)
-            app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
-            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
+                app.logger.error(f"Invalid response format for projects on experience {idx}. Response: {project_response_str}")
+                company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("projects", {})
             
-            if company_response_str.startswith("{") and company_response_str.endswith("}"):
-                try:
-                    company_parsed_result = json.loads(company_response_str)
-                except json.JSONDecodeError:
-                    app.logger.error("JSON decoding failed for company_skills_rating on experience %d", idx)
-                    company_parsed_result = {"error": "Invalid JSON response"}
-            else:
-                company_parsed_result = {"error": "Invalid JSON response"}
-
-            work_experiences[idx]["company_skills_rating"] = company_parsed_result
-
-        # Update the results with the modified work_experiences
+            work_experiences[idx].update(company_parsed_result)
+        
         results["experiences"] = work_experiences
     return jsonify(results), 200
 

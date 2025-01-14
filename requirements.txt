@@ -3,3 +3,4 @@ pypdf2
 langchain
 openai
 PyPDF2
+flask_cors
