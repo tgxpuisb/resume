@@ -2,3 +2,4 @@ flask
 pypdf2
 langchain
 openai
+PyPDF2
