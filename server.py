@@ -5,9 +5,24 @@ import traceback
 from flask import Flask, request, jsonify
 from PyPDF2 import PdfReader
 from openai import OpenAI
+from flask_cors import CORS
 
-
+DEFAULT_EMPTY_RESPONSES = {
+    "phone_number": {"phone": ""},
+    "name_extraction": {"first_name": "", "last_name": "", "full_name": ""},
+    "work_years": {"work_year": 0},
+    "job_titles": {"titles": []},
+    "tagline": {"tagline": ""},
+    "summary": {"self_introduce": ""},
+    "work_experiences": {"experiences": []},
+    "educations": {"educations": []},
+    "patents": {"patents": ""},
+    "en_speaking_level": {"en_speaking_level": None},
+    "en_read_write_level": {"en_read_write_level": None},
+    "company_skills_rating": {"skills": []},
+}
 app = Flask(__name__)
+CORS(app)
 app.config['UPLOAD_FOLDER'] = './uploads'
 
 client = OpenAI()
@@ -15,28 +30,25 @@ client = OpenAI()
 # 定义各个任务的 Prompt，确保所有花括号都被正确转义
 PROMPTS = {
     "phone_number": (
-        "你是一个资深的HR助理，你的任务是从简历内容中准确地整理出有效信息并以JSON的格式给出。"
-        "请仅以JSON形式回答，以下是简历内容：\n{{\"phone\": \"+86 123456789\"}}。\n\n"
-        "请根据以下简历内容回答问题：\n{pdf_text}\n\n"
-        "请告诉我候选人的手机号phone，手机号前需要有候选人的国籍信息。"
-        "如果候选人没填写国籍信息，则根据简历内容中的工作地点进行猜测。例如：如果候选人是中国则数据是+86，如果候选人是美国则数据是+1。"
-        "地址和手机号中间不需要有空格。"
-        "如果无法找到手机号，请返回{{\"phone\": \"\"}}。"
+        "Your task is to find out the candidate's mobile phone number, which must be preceded by the candidate's nationality information."
+        "If the candidate does not fill in the nationality information, the data is guessed based on the work location in the resume. For example, if the candidate is from China, the data is +86, and if the candidate is from the United States, the data is +1."
+        "There does not need to be a space between the address and the phone number."
+        "If you cannot find your phone number, please return {{\"phone\": \"\"}}。"
     ),
     "name_extraction": (
-        "请告诉我候选人的用户名，分别以first_name，last_name，full_name的形式给出。"
-        "如果用户名是中文，请翻译成对应汉语拼音，中文的姓氏对应last_name，名字对应first_name。"
-        "full_name是first_name加上last_name。"
-        "返回格式仅需JSON形式，示例：{{\"first_name\": \"Wei\", \"last_name\": \"Wang\", \"full_name\": \"Wei Wang\"}}。"
-        "如果无法找到姓名，请返回{{\"first_name\": \"\", \"last_name\": \"\", \"full_name\": \"\"}}。"
+        "Your task is to find the candidate's username, given in the fields first_name, last_name, full_name."
+        "Note: If the username is in Chinese, please translate it into the corresponding Chinese pinyin. The Chinese last name corresponds to last_name and the first name corresponds to first_name."
+        "full_name is first_name concat last_name."
+        "The return format only needs to be in JSON format, example: {{\"first_name\": \"Wei\", \"last_name\": \"Wang\", \"full_name\": \"Wei Wang\"}}。"
+        "If the name cannot be found, please return {{\"first_name\": \"\", \"last_name\": \"\", \"full_name\": \"\"}}。"
     ),
     "work_years": (
-        "请告诉我候选人的工作年限，返回格式为{{\"work_year\": number}}。"
-        "如果候选人在简历内直接写明工作年限，则直接使用；如果候选人没有写明，则根据候选人的第一份工作和最后一份工作的时间间隔进行计算。"
-        "如果无法找到工作年限信息，请返回{{\"work_year\": 0}}。"
+        "Your task is to calculate the candidate's years of work experience and return the format: {{\"work_year\": number}}。"
+        "If the candidate directly states his/her years of work in the resume, it will be used directly; if the candidate does not state it, it will be calculated based on the time interval between the candidate's first job and the last job."
+        "If you cannot find the years of service information, please return {{\"work_year\": 0}}。"
     ),
     "job_titles": (
-        "这里是一份job title的JSON数据："
+        "Here is a JSON data of job title: "
         "[{{\"id\":13,\"name\":\"Admin\"}}, {{\"id\":12,\"name\":\"Android Engineer\"}}, {{\"id\":3,\"name\":\"Back-end Engineer\"}}, "
         "{{\"id\":19,\"name\":\"Business Dev Rep\"}}, {{\"id\":23,\"name\":\"CV\"}}, {{\"id\":28,\"name\":\"Data Scientist\"}}, "
         "{{\"id\":18,\"name\":\"DevOps Engineer\"}}, {{\"id\":2,\"name\":\"Front-end Engineer\"}}, {{\"id\":17,\"name\":\"Full-stack Engineer\"}}, "
@@ -45,32 +57,30 @@ PROMPTS = {
         "{{\"id\":4,\"name\":\"Product Manager\"}}, {{\"id\":7,\"name\":\"Project Manager\"}}, {{\"id\":8,\"name\":\"QA\"}}, "
         "{{\"id\":9,\"name\":\"QA Lead\"}}, {{\"id\":5,\"name\":\"Software Architecture\"}}, {{\"id\":24,\"name\":\"SRE Engr\"}}, "
         "{{\"id\":6,\"name\":\"Team Lead\"}}, {{\"id\":10,\"name\":\"UI Design Lead\"}}, {{\"id\":1,\"name\":\"UI Designer\"}}, "
-        "{{\"id\":25,\"name\":\"UX\"}}, {{\"id\":27,\"name\":\"Web3 Researcher\"}}]"
-        ".\n"
-        "你的任务是根据候选人的简历总结用户的job title。"
-        "你总结的候选人job title需要是在候选人在项目中主要从事的内容，请给出最多不超过5个job title，"
-        "以{{\"titles\": []}}的数据结构返回。"
-        "如果无法找到job title，请返回{{\"titles\": []}}。"
+        "{{\"id\":25,\"name\":\"UX\"}}, {{\"id\":27,\"name\":\"Web3 Researcher\"}}] \n"
+        "Your task is to summarize the user's job title based on the candidate's resume."
+        "The job title of the candidate you summarize needs to be the main content of the candidate in the project. Please give no more than 5 job titles."
+        "The return format only needs to be in JSON format, example: {{\"titles\": [{{\"id\": 13, \"name\": \"Admin\"}}]}}"
+        "If the job_titles cannot be found, please return {{\"titles\": []}}。"
     ),
     "tagline": (
-        "为候选人总结一个英文的tagline，格式为{{\"tagline\": \"tagline detail\"}}。"
+        "your task is Summarize an English tagline for the candidate"
         "Although all kinds of content can be employed as a tagline, here are some general types of taglines you might want to use: \n"
         "1. A philosophy mini-statement or personal description \n"
         "2. One or more achievements each described separately \n"
         "3. A mini achievement summarizing career-long accomplishments\n\n"
-        "请仅以JSON形式回答。"
-        "如果无法生成tagline，请返回{{\"tagline\": \"\"}}。"
+        "The return format only needs to be in JSON format, example: {{\"tagline\": \"tagline detail\"}}。\n"
+        "If the tagline cannot be found, please return {{\"tagline\": \"\"}}。"
     ),
     "summary": (
-        "为候选人的简历写一个英文的summary。"
-        "Resume summary statement是一个两到三句的专业介绍，您可以将其添加在简历顶部，以突出您的最有价值的技能和经验。"
-        "Resume summary可以帮助雇主快速了解您是否具备他们所需的技能和背景。"
-        "summary格式为{{\"self_introduce\": \"summary content\"}}，其中summary content可以是一个由<ol><li></li></ol>组成的有序列表的HTML字符串。"
-        "请仅以JSON形式回答。"
-        "如果无法生成summary，请返回{{\"self_introduce\": \"\"}}。"
+        "your task Write an English summary for the candidate's resume."
+        "A resume summary statement is a two- to three-sentence professional introduction that you add to the top of your resume to highlight your most valuable skills and experiences."
+        "A resume summary can help employers quickly understand whether you have the skills and background they need."
+        "The return format only needs to be in JSON format, example: {{\"self_introduce\": \"summary content\"}}，The summary content can be an HTML string consisting of an ordered list of <ol><li></li></ol>."
+        "If the summary cannot be found, please return {{\"self_introduce\": \"\"}}。"
     ),
     "work_experiences": (
-        "请总结候选人的工作经历和项目。以下是数据结构的描述：\n"
+        "your task is summarize the candidate's work experience and projects. The following is a description of the data structure:\n"
         "type workExperiences = {{\n"
         "  experiences: Array<{{\n"
         "    where: string // The company the candidate works for, translate to English\n"
@@ -81,11 +91,10 @@ PROMPTS = {
         "  }}>;\n"
         "}}\n"
         "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
-        "\n\n简历内容：\n{pdf_text}\n\n"
-        "请确保返回的数据是有效的JSON格式，符合上述数据结构描述。"
+        "The return format only needs to be in JSON format, example: {{\"experiences\": [{{\"where\": \"\", \"from\": \"\", \"to\": \"\", \"mainly_as\": \"\", \"description\": \"\"}}]}}"
     ),
     "company_skills_rating": (
-        "这是一份公司信息技术的技能列表: "
+        "Here is a list of skills for company information technology:"
         "[{{\"i\":8,\"n\":\"React\",\"t\":\"Front End\"}}, {{\"i\":9,\"n\":\"Visual Basic\",\"t\":\"Front End\"}}, {{\"i\":10,\"n\":\"JavaScript\",\"t\":\"Front End\"}}, "
         "{{\"i\":11,\"n\":\"Swift\",\"t\":\"Front End\"}}, {{\"i\":12,\"n\":\"HTML5\",\"t\":\"Front End\"}}, {{\"i\":13,\"n\":\"Angular\",\"t\":\"Front End\"}}, "
         "{{\"i\":14,\"n\":\"Flutter\",\"t\":\"Front End\"}}, {{\"i\":15,\"n\":\"Bootstrap\",\"t\":\"Front End\"}}, {{\"i\":16,\"n\":\"Layui\",\"t\":\"Front End\"}}, "
@@ -94,7 +103,7 @@ PROMPTS = {
         "{{\"i\":61,\"n\":\"Sketch\",\"t\":\"Front End\"}}, {{\"i\":62,\"n\":\"Figma\",\"t\":\"Front End\"}}, {{\"i\":63,\"n\":\"Principle\",\"t\":\"Front End\"}}, "
         "{{\"i\":64,\"n\":\"Firebase\",\"t\":\"Front End\"}}, {{\"i\":95,\"n\":\"React Native\",\"t\":\"Front End\"}}, {{\"i\":96,\"n\":\"RxSwift\",\"t\":\"Front End\"}}, "
         "{{\"i\":109,\"n\":\"Swiftui\",\"t\":\"Front End\"}}, {{\"i\":110,\"n\":\"Combine\",\"t\":\"Front End\"}}, {{\"i\":111,\"n\":\"Mobile media\",\"t\":\"Front End\"}}, "
-        "{{\"i\":112,\"n\":\"Android Framework\",\"t\":\"Front End\"}}, {{\"i\":113,\"n\":\"Java\",\"t\":\"Front End\"}}, {{\"i\":114,\"n\":\"Kotlin\",\"t\":\"Front End\"}}, "
+        "{{\"i\":112,\"n\":\"Android Framework\",\"t\":\"Front End\"}}, {{\"i\":114,\"n\":\"Kotlin\",\"t\":\"Front End\"}}, "
         "{{\"i\":115,\"n\":\"Cocoa Touch\",\"t\":\"Front End\"}}, {{\"i\":137,\"n\":\"Elixir\",\"t\":\"Front End\"}}, {{\"i\":7,\"n\":\"Java\",\"t\":\"Back End\"}}, "
         "{{\"i\":18,\"n\":\"C\",\"t\":\"Back End\"}}, {{\"i\":19,\"n\":\"Python\",\"t\":\"Back End\"}}, {{\"i\":20,\"n\":\"C++\",\"t\":\"Back End\"}}, "
         "{{\"i\":21,\"n\":\"C#\",\"t\":\"Back End\"}}, {{\"i\":22,\"n\":\"R\",\"t\":\"Back End\"}}, {{\"i\":23,\"n\":\"PHP\",\"t\":\"Back End\"}}, "
@@ -133,14 +142,14 @@ PROMPTS = {
         "{{\"i\":130,\"n\":\"Helm\",\"t\":\"DevOps\"}}, {{\"i\":131,\"n\":\"Docker\",\"t\":\"DevOps\"}}, {{\"i\":132,\"n\":\"Terraform\",\"t\":\"DevOps\"}}, "
         "{{\"i\":134,\"n\":\"Jenkins\",\"t\":\"DevOps\"}}, {{\"i\":135,\"n\":\"CircleCI\",\"t\":\"DevOps\"}}]"
         ".\n"
-        "你的任务是结合候选人简历对候选人的信息技术技能进行评级，评级级别为1-5的正整数，熟练程度随着数字增大而增大，"
-        "1代表候选人只是使用过该技术，3代表候选人对技术比较熟练，5代表候选人精通该项技术并熟悉这项技术的运行原理。"
-        "注意：如果候选人简历中没有提到公司技术列表中的技术则不需要评级。"
-        "请以以下格式返回：{{\"skills\": [{{\"id\": \"number\", \"name\": \"name\", \"type\": \"大类别\", \"level\": \"评级\"}}]}}。"
+        "Your task is to rate the candidate's information technology skills based on his/her resume. The rating level is a positive integer from 1 to 5, and the proficiency increases as the number increases."
+        "1 means the candidate has only used the technology, 3 means the candidate is relatively proficient in the technology, and 5 means the candidate is proficient in the technology and familiar with how it works."
+        "Note: If the candidate's resume does not mention any technology from the company's technology list, no rating is required."
+        "The return format only needs to be in JSON format, example: {{\"skills\": [{{\"id\": \"number\", \"name\": \"name\", \"type\": \"\", \"level\": 3}}]}}。"
         "如果没有需要评级的技能，请返回{{\"skills\": []}}。"
     ),
     "educations": (
-        "请总结候选人的教育经历。以下是数据结构的描述：\n"
+        "your task is summarize the candidate's educational experience. The following is a description of the data structure:\n"
         "type educations = {{\n"
         "  educations: Array<{{\n"
         "    where: string // Where the candidate received his or her education, translate to English\n"
@@ -151,35 +160,32 @@ PROMPTS = {
         "  }}>;\n"
         "}}\n"
         "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
-        "\n\n简历内容：\n{pdf_text}\n\n"
-        "请确保返回的数据是有效的JSON格式，符合上述数据结构描述。"
+        "The return format only needs to be in JSON format, example: {{\"experiences\": [{{\"where\": \"\", \"from\": \"\", \"to\": \"\", \"mainly_as\": \"}}]}}"
     ),
     "patents": (
-        "请总结候选人的专利信息，格式为{{\"patents\": \"string\"}}。"
-        "如果内容涉及多个项目，可以使用一个由<ol><li></li></ol>组成的HTML字符串描述。"
-        "注意：如果候选人没有专利，请返回空字符串。"
+        "Your task is to summarize the candidate's patent information:"
+        "The return format only needs to be in JSON format, example:  {{\"patents\": \"patents string\"}} If the content involves multiple items, The patents string can be can use an HTML string consisting of <ol><li></li></ol> to describe it."
+        "Note：If the patents cannot be found, please return {{\"patents\": \"\"}}。"
         "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
     ),
     "en_speaking_level": (
-        "请总结候选人的英语口语水平，评分标准如下：\n"
+        "your task is summarize the candidate's English speaking proficiency, the scoring criteria are as follows：\n"
         "1=Can recognize and understand very basic words and simple, familiar phrases. Able to write simple isolated phrases and sentences.\n"
         "2=Can read and understand short, simple texts. Capable of producing basic sentences, writing brief notes and messages related to immediate needs.\n"
         "3=Can read straightforward information within a known area and write connected text on topics that are familiar or of personal interest.\n"
         "4=Able to read and write texts about various topics. Can understand the main ideas of complex text and produce clear, detailed writing on a wide range of subjects.\n"
         "5=Proficient in reading and writing complex texts. Capable of understanding implicit meanings and producing sophisticated and well-structured writing on complex subjects.\n"
-        "请仅以JSON形式回答。"
-        "返回格式为{{\"en_speaking_level\": number or null}}。"
+        "The return format only needs to be in JSON format, example: {{\"en_speaking_level\": number or null}}。"
         "Note: If the candidate does not specify this ability, null is returned。"
     ),
     "en_read_write_level": (
-        "请总结候选人的英语读写水平，评分标准如下：\n"
+        "your task is summarize the candidate's English reading and writing proficiency. The scoring criteria are as follows: \n"
         "1=Can use simple phrases and sentences to communicate basic needs in familiar contexts. Interaction is limited to slow speech and repetition.\n"
         "2=Able to engage in simple conversation on familiar topics with some assistance. Can ask and answer basic questions and use common expressions.\n"
         "3=Can handle short, routine exchanges without disruption. Able to communicate in simple and direct exchanges of information on familiar tasks and topics.\n"
         "4=Can communicate with some confidence on familiar routine and non-routine matters. Able to express personal opinions but sometimes requires assistance for more complex conversation.\n"
         "5=Fully fluent and comfortable in any situation. Can engage in nuanced, complex conversations, understanding slang, idioms, and cultural references.\n"
-        "请仅以JSON形式回答。"
-        "返回格式为{{\"en_read_write_level\": number or null}}。"
+        "The return format only needs to be in JSON format, example: {{\"en_read_write_level\": number or null}}。"
         "Note: If the candidate does not specify this ability, null is returned。"
     )
 }
@@ -201,7 +207,7 @@ def clean_pdf_text(pdf_text):
     pattern = r'(?=.{16,})[0-9A-Za-z]{16,}'
     return re.sub(pattern, '', pdf_text)
 
-def call_openai(prompt):
+def call_openai(prompt, pdf_text):
     """
     使用 OpenAI API 进行聊天完成，返回模型的回复内容。
     """
@@ -209,7 +215,8 @@ def call_openai(prompt):
         response = client.chat.completions.create(
             model="gpt-4",  # 若没有 GPT-4 权限可改为 "gpt-3.5-turbo"
             messages=[
-                {"role": "system", "content":  "You are a helpful assistant."},
+                {"role": "system", "content":  "You are a senior HR assistant. Your task is to help your boss who only knows English to accurately filter out valid information from resumes and present it in JSON format."},
+                {"role": "user", "content": f"answer the questions based on the following resume: \n{pdf_text}\n\n"},
                 {"role": "user", "content": prompt}
             ],
             temperature=1,
@@ -266,7 +273,7 @@ def upload_pdf():
         app.logger.debug(f"Filled prompt for {task_name}: {filled_prompt}")
 
         # 调用 OpenAI API
-        response_str = call_openai(filled_prompt)
+        response_str = call_openai(filled_prompt, pdf_text_cleaned)
 
         # 解析 JSON 响应
         if isinstance(response_str, str) and response_str.startswith("{") and response_str.endswith("}"):
@@ -279,10 +286,10 @@ def upload_pdf():
             app.logger.error(f"Invalid response format for task '{task_name}'. Response: {response_str}")
             parsed_result = DEFAULT_EMPTY_RESPONSES.get(task_name, {})
 
-        results[task_name] = parsed_result
+        results.update(parsed_result)
 
     # 处理 work_experiences
-    work_experiences = results.get("work_experiences", {}).get("experiences", [])
+    work_experiences = results.get("experiences", [])
     if isinstance(work_experiences, list):
         for idx, experience in enumerate(work_experiences):
             # 提取工作描述
@@ -304,7 +311,7 @@ def upload_pdf():
             app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
 
             # 调用 OpenAI API
-            company_response_str = call_openai(company_prompt)
+            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
 
             # 解析 JSON 响应
             if isinstance(company_response_str, str) and company_response_str.startswith("{") and company_response_str.endswith("}"):
@@ -320,7 +327,7 @@ def upload_pdf():
             work_experiences[idx]["company_skills_rating"] = company_parsed_result
 
         # 更新 results 中的 work_experiences
-        results["work_experiences"]["experiences"] = work_experiences
+        results["experiences"] = work_experiences
         for idx, experience in enumerate(work_experiences):
             # 提取工作描述
             experience_description = experience.get("description", "")
@@ -341,7 +348,7 @@ def upload_pdf():
             app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
 
             # 调用 OpenAI API
-            company_response_str = call_openai(company_prompt)
+            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
 
             # 解析 JSON 响应
             if isinstance(company_response_str, str) and company_response_str.startswith("{") and company_response_str.endswith("}"):
@@ -356,7 +363,7 @@ def upload_pdf():
             work_experiences[idx]["company_skills_rating"] = company_parsed_result
 
         # 更新 results 中的 work_experiences
-        results["work_experiences"]["experiences"] = work_experiences
+        results["experiences"] = work_experiences
 
         for idx, experience in enumerate(work_experiences):
             # Extract the description of the experience
@@ -369,7 +376,7 @@ def upload_pdf():
             # Prepare the prompt for company_skills_rating by filling in the description
             company_prompt = PROMPTS["company_skills_rating"].format(pdf_text=experience_description)
             app.logger.debug(f"Filled prompt for company_skills_rating for experience {idx}: {company_prompt}")
-            company_response_str = call_openai(company_prompt)
+            company_response_str = call_openai(company_prompt, pdf_text_cleaned)
             
             if company_response_str.startswith("{") and company_response_str.endswith("}"):
                 try:
@@ -383,7 +390,7 @@ def upload_pdf():
             work_experiences[idx]["company_skills_rating"] = company_parsed_result
 
         # Update the results with the modified work_experiences
-        results["work_experiences"]["experiences"] = work_experiences
+        results["experiences"] = work_experiences
     return jsonify(results), 200
 
 # 全局异常处理，隐藏 Python 堆栈给客户端
