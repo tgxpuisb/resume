@@ -31,17 +31,17 @@ client = OpenAI()
 # 定义各个任务的 Prompt，确保所有花括号都被正确转义
 PROMPTS = {
     "phone_number": (
-        "Your task is to find out the candidate's mobile phone number, which must be preceded by the candidate's nationality information."
+        "Your task is to find out the candidate's mobile phone number and email, which must be preceded by the candidate's nationality information."
         "If the candidate does not fill in the nationality information, the data is guessed based on the work location in the resume. For example, if the candidate is from China, the data is +86, and if the candidate is from the United States, the data is +1."
         "There does not need to be a space between the address and the phone number."
-        "If you cannot find your phone number, please return {{\"phone\": \"\"}}。"
+        "If you cannot find your phone number, please return {{\"phone\": \"unknown\", \"email\": \"unknown\"}}。"
     ),
     "name_extraction": (
         "Your task is to find the candidate's username, given in the fields first_name, last_name, full_name."
         "Note: If the username is in Chinese, please translate it into the corresponding Chinese pinyin. The Chinese last name corresponds to last_name and the first name corresponds to first_name."
         "full_name is first_name concat last_name."
         "The return format only needs to be in JSON format, example: {{\"first_name\": \"Wei\", \"last_name\": \"Wang\", \"full_name\": \"Wei Wang\"}}。"
-        "If the name cannot be found, please return {{\"first_name\": \"\", \"last_name\": \"\", \"full_name\": \"\"}}。"
+        "If the name cannot be found, please return {{\"first_name\": \"unknown\", \"last_name\": \"unknown\", \"full_name\": \"unknown\"}}。"
     ),
     "work_years": (
         "Your task is to calculate the candidate's years of work experience and return the format: {{\"work_year\": number}}。"
@@ -273,7 +273,7 @@ def call_openai(prompt, pdf_text):
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",  # 若没有 GPT-4 权限可改为 "gpt-3.5-turbo"
+            model="gpt-4o-mini",  # 若没有 GPT-4 权限可改为 "gpt-3.5-turbo"
             messages=[
                 {"role": "system", "content": "You are a senior HR assistant. Your task is to help your boss who only knows English to accurately filter out valid information from resumes and present it in JSON format."},
                 {"role": "system", "content": "You work as an API, your input and output will be strictly formatted JSON  which can be directly parsed by the application. Do not enclose JSON string in markdown quotes."},
