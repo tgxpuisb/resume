@@ -2,14 +2,16 @@ import os
 import re
 import json
 import traceback
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from PyPDF2 import PdfReader
 from openai import OpenAI
 from flask_cors import CORS
+from datetime import datetime
+import time
 
 DEFAULT_EMPTY_RESPONSES = {
-    "phone_number": {"phone": ""},
-    "name_extraction": {"first_name": "", "last_name": "", "full_name": ""},
+    "base_info": {"phone": ""},
+    "user_name": {"first_name": "", "last_name": "", "full_name": ""},
     "work_years": {"work_year": 0},
     "job_titles": {"titles": []},
     "tagline": {"tagline": ""},
@@ -30,13 +32,13 @@ client = OpenAI()
 
 # 定义各个任务的 Prompt，确保所有花括号都被正确转义
 PROMPTS = {
-    "phone_number": (
+    "base_info": (
         "Your task is to find out the candidate's mobile phone number and email, which must be preceded by the candidate's nationality information."
         "If the candidate does not fill in the nationality information, the data is guessed based on the work location in the resume. For example, if the candidate is from China, the data is +86, and if the candidate is from the United States, the data is +1."
         "There does not need to be a space between the address and the phone number."
         "If you cannot find your phone number, please return {{\"phone\": \"unknown\", \"email\": \"unknown\"}}。"
     ),
-    "name_extraction": (
+    "user_name": (
         "Your task is to find the candidate's username, given in the fields first_name, last_name, full_name."
         "Note: If the username is in Chinese, please translate it into the corresponding Chinese pinyin. The Chinese last name corresponds to last_name and the first name corresponds to first_name."
         "full_name is first_name concat last_name."
@@ -80,19 +82,25 @@ PROMPTS = {
         "The return format only needs to be in JSON format, example: {{\"self_introduce\": \"summary content\"}}，The summary content can be an HTML string consisting of an ordered list of <ol><li></li></ol>."
         "If the summary cannot be found, please return {{\"self_introduce\": \"\"}}。"
     ),
-    "work_experiences": (
-        "your task is summarize the candidate's work experience and projects. The following is a description of the data structure:\n"
-        "type workExperiences = {{\n"
-        "  experiences: Array<{{\n"
-        "    where: string // The company the candidate works for, translate to English\n"
-        "    from: string // Candidate's employment start date\n"
-        "    to: string // The end time of the candidate's employment\n"
-        "    mainly_as: string // The candidate's job level or position, translate to English\n"
-        "    description: string // Description and summary of the candidate's work in the company. If the content involves multiple items and is independent of each other, you can use an ordered list of <ol><li></li></ol> for the description.\n"
-        "  }}>;\n"
-        "}}\n"
-        "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
-        "The return format only needs to be in JSON format, example: {{\"experiences\": [{{\"where\": \"\", \"from\": \"\", \"to\": \"\", \"mainly_as\": \"\", \"description\": \"\"}}]}}"
+     "en_speaking_level": (
+        "your task is summarize the candidate's English speaking proficiency, the scoring criteria are as follows：\n"
+        "1=Can recognize and understand very basic words and simple, familiar phrases. Able to write simple isolated phrases and sentences.\n"
+        "2=Can read and understand short, simple texts. Capable of producing basic sentences, writing brief notes and messages related to immediate needs.\n"
+        "3=Can read straightforward information within a known area and write connected text on topics that are familiar or of personal interest.\n"
+        "4=Able to read and write texts about various topics. Can understand the main ideas of complex text and produce clear, detailed writing on a wide range of subjects.\n"
+        "5=Proficient in reading and writing complex texts. Capable of understanding implicit meanings and producing sophisticated and well-structured writing on complex subjects.\n"
+        "The return format only needs to be in JSON format, example: {{\"en_speaking_level\": number or null}}。"
+        "Note: If the candidate does not specify this ability, null is returned。"
+    ),
+    "en_read_write_level": (
+        "your task is summarize the candidate's English reading and writing proficiency. The scoring criteria are as follows: \n"
+        "1=Can use simple phrases and sentences to communicate basic needs in familiar contexts. Interaction is limited to slow speech and repetition.\n"
+        "2=Able to engage in simple conversation on familiar topics with some assistance. Can ask and answer basic questions and use common expressions.\n"
+        "3=Can handle short, routine exchanges without disruption. Able to communicate in simple and direct exchanges of information on familiar tasks and topics.\n"
+        "4=Can communicate with some confidence on familiar routine and non-routine matters. Able to express personal opinions but sometimes requires assistance for more complex conversation.\n"
+        "5=Fully fluent and comfortable in any situation. Can engage in nuanced, complex conversations, understanding slang, idioms, and cultural references.\n"
+        "The return format only needs to be in JSON format, example: {{\"en_read_write_level\": number or null}}。"
+        "Note: If the candidate does not specify this ability, null is returned。"
     ),
     "skills": (
         "Here is a list of skills for company information technology:"
@@ -148,6 +156,20 @@ PROMPTS = {
         "Note: If the candidate's resume does not mention any technology from the company's technology list, no rating is required."
         "The return format only needs to be in JSON format, example: {{\"skills\": [{{\"id\": \"number\", \"name\": \"name\", \"type\": \"\", \"level\": 3}}]}}。"
     ),
+    "work_experiences": (
+        "your task is summarize the candidate's work experience and projects. The following is a description of the data structure:\n"
+        "type workExperiences = {{\n"
+        "  experiences: Array<{{\n"
+        "    where: string // The company the candidate works for, translate to English\n"
+        "    from: string // Candidate's employment start date\n"
+        "    to: string // The end time of the candidate's employment\n"
+        "    mainly_as: string // The candidate's job level or position, translate to English\n"
+        "    description: string // Description and summary of the candidate's work in the company. If the content involves multiple items and is independent of each other, you can use an ordered list of <ol><li></li></ol> for the description.\n"
+        "  }}>;\n"
+        "}}\n"
+        "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
+        "The return format only needs to be in JSON format, example: {{\"experiences\": [{{\"where\": \"\", \"from\": \"\", \"to\": \"\", \"mainly_as\": \"\", \"description\": \"\"}}]}}"
+    ),
     "educations": (
         "your task is summarize the candidate's educational experience. The following is a description of the data structure:\n"
         "type educations = {{\n"
@@ -167,26 +189,6 @@ PROMPTS = {
         "The return format only needs to be in JSON format, example:  {{\"patents\": \"patents string\"}} If the content involves multiple items, The patents string can be can use an HTML string consisting of <ol><li></li></ol> to describe it."
         "Note：If the patents cannot be found, please return {{\"patents\": \"\"}}。"
         "Note: The resume may be written in Chinese, and the summary needs to be translated into English。"
-    ),
-    "en_speaking_level": (
-        "your task is summarize the candidate's English speaking proficiency, the scoring criteria are as follows：\n"
-        "1=Can recognize and understand very basic words and simple, familiar phrases. Able to write simple isolated phrases and sentences.\n"
-        "2=Can read and understand short, simple texts. Capable of producing basic sentences, writing brief notes and messages related to immediate needs.\n"
-        "3=Can read straightforward information within a known area and write connected text on topics that are familiar or of personal interest.\n"
-        "4=Able to read and write texts about various topics. Can understand the main ideas of complex text and produce clear, detailed writing on a wide range of subjects.\n"
-        "5=Proficient in reading and writing complex texts. Capable of understanding implicit meanings and producing sophisticated and well-structured writing on complex subjects.\n"
-        "The return format only needs to be in JSON format, example: {{\"en_speaking_level\": number or null}}。"
-        "Note: If the candidate does not specify this ability, null is returned。"
-    ),
-    "en_read_write_level": (
-        "your task is summarize the candidate's English reading and writing proficiency. The scoring criteria are as follows: \n"
-        "1=Can use simple phrases and sentences to communicate basic needs in familiar contexts. Interaction is limited to slow speech and repetition.\n"
-        "2=Able to engage in simple conversation on familiar topics with some assistance. Can ask and answer basic questions and use common expressions.\n"
-        "3=Can handle short, routine exchanges without disruption. Able to communicate in simple and direct exchanges of information on familiar tasks and topics.\n"
-        "4=Can communicate with some confidence on familiar routine and non-routine matters. Able to express personal opinions but sometimes requires assistance for more complex conversation.\n"
-        "5=Fully fluent and comfortable in any situation. Can engage in nuanced, complex conversations, understanding slang, idioms, and cultural references.\n"
-        "The return format only needs to be in JSON format, example: {{\"en_read_write_level\": number or null}}。"
-        "Note: If the candidate does not specify this ability, null is returned。"
     ),
     "projects": (
         "Here is a list of skills for company information technology:"
@@ -242,10 +244,12 @@ PROMPTS = {
         "  projects: Array<{{\n"
         "    name: string // the project name translate to English\n"
         "    title: string // The position or rank held by the candidate in this project, translate to English\n"
-        "    description: string // The candidate's detailed description of the project, translate to English\n"
+        "    description: string // The candidate's detailed description of the project, translate to English, The description content can be an HTML string consisting of an ordered list of <ol><li></li></ol>.\n"
         "    tech: Array<{{ \"id\": number, \"skill\": \"string\" }}> // The skills the candidate used in the project from list of skills for company information technology" 
         "  }}>;\n"
         "}}\n"
+        "Only summarize the project experience under {company_name}. if project experiences that do not belong to {company_name} do not need to be summarized. This is critical, please check carefully"
+        "if project belong to {company_name} cannot be found please return {{\"projects\": []}}"
         "The return format only needs to be in JSON format, example: {{\"projects\": [{{\"name\": \"\", \"title\": \"\", \"description\": \"\", \"tech\": \"}}]}}"
     )
 }
@@ -382,6 +386,114 @@ def upload_pdf():
         
         results["experiences"] = work_experiences
     return jsonify(results), 200
+
+@app.route("/upload2", methods=["POST"])
+def upload_pdf2():
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Only PDF files are allowed"}), 400
+
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+
+    try:
+        file.save(file_path)
+    except Exception as e:
+        app.logger.error("Failed to save file: %s", e, exc_info=True)
+        return jsonify({"error": "Failed to save file"}), 500
+
+    pdf_text_raw = extract_text_from_pdf(file_path)
+    pdf_text_cleaned = clean_pdf_text(pdf_text_raw)
+    print(pdf_text_cleaned)
+    results = {}
+
+    def generate():
+        # yield "data: finished\n\n"
+        # return
+
+            # 处理所有任务，跳过 "projects"
+        for task_name, prompt_content in PROMPTS.items():
+            if task_name == "projects":
+                continue  # 后面单独处理
+
+            yield f"data: {json.dumps({"message": "Generating %s" % task_name })}\n\n"
+
+            app.logger.debug(f"Processing task: {task_name}")
+
+            parsed_result = DEFAULT_EMPTY_RESPONSES.get(task_name, {})
+
+            # 填充 Prompt
+            try:
+                filled_prompt = prompt_content.format(pdf_text=pdf_text_cleaned)
+            except KeyError as e:
+                app.logger.error("Formatting prompt failed for task '%s': %s", task_name, e, exc_info=True)
+                yield f"data: {json.dumps(parsed_result)}\n\n"
+                continue
+
+            app.logger.debug(f"Filled prompt for {task_name}: {filled_prompt}")
+
+            # 调用 OpenAI API
+            response_str = call_openai(filled_prompt, pdf_text_cleaned)
+
+            # 解析 JSON 响应
+            if isinstance(response_str, str) and response_str.startswith("{") and response_str.endswith("}"):
+                try:
+                    parsed_result = json.loads(response_str)
+                except json.JSONDecodeError:
+                    app.logger.error(f"JSON decoding failed for task '{task_name}'. Response: {response_str}")
+                    parsed_result = DEFAULT_EMPTY_RESPONSES.get(task_name, {})
+            else:
+                app.logger.error(f"Invalid response format for task '{task_name}'. Response: {response_str}")
+
+            if task_name == "work_experiences":
+                results.update(parsed_result)
+            yield f"data: {json.dumps(parsed_result)}\n\n"
+
+
+         # 处理 work_experiences
+        work_experiences = results.get("experiences", [])
+        if isinstance(work_experiences, list):
+            for idx, experience in enumerate(work_experiences):
+                projects_prompt_template = PROMPTS["projects"]
+                company_name = experience.get("where", "")
+                yield f"data: {json.dumps({"message": "Generating projects for company: %s" % company_name })}\n\n"
+                try:
+                    projects_prompt = '\n'.join(projects_prompt_template).format(company_name=company_name)
+                except KeyError as e:
+                    app.logger.error("Formatting projects prompt failed for experience %d: %s", idx, e, exc_info=True)
+                    # work_experiences[idx].update(DEFAULT_EMPTY_RESPONSES.get("projects", {}))
+                    continue
+                # 调用 OpenAI API
+                project_response_str = call_openai(projects_prompt, pdf_text_cleaned)
+                # 解析 JSON 响应
+                company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("projects", [])
+                if isinstance(project_response_str, str) and project_response_str.startswith("{") and project_response_str.endswith("}"):
+                    try:
+                        company_parsed_result = json.loads(project_response_str)
+                    except json.JSONDecodeError:
+                        app.logger.error(f"JSON decoding failed for projects on experience {idx}. Response: {project_response_str}")
+                        
+                else:
+                    app.logger.error(f"Invalid response format for projects on experience {idx}. Response: {project_response_str}")
+                    company_parsed_result = DEFAULT_EMPTY_RESPONSES.get("projects", {})
+                
+                company_parsed_result.update({"idx": idx})
+                print("=====")
+                print(project_response_str)
+                print('======')
+                yield f"data: {json.dumps(company_parsed_result)}\n\n"
+        
+        yield "data: finished\n\n"
+        
+    return Response(generate(), mimetype='text/event-stream')
+
 
 # 全局异常处理，隐藏 Python 堆栈给客户端
 @app.errorhandler(Exception)
