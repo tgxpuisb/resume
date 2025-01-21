@@ -77,7 +77,7 @@ PROMPTS = {
     ),
     "summary": (
         "your task Write an English summary for the candidate's resume."
-        "A resume summary statement is a two- to three-sentence professional introduction that you add to the top of your resume to highlight your most valuable skills and experiences."
+        "A resume summary statement is a two to five sentence professional introduction that you add to the top of your resume to highlight your most valuable skills and experiences."
         "A resume summary can help employers quickly understand whether you have the skills and background they need."
         "The return format only needs to be in JSON format, example: {{\"self_introduce\": \"summary content\"}}，The summary content can be an HTML string consisting of an ordered list of <ol><li></li></ol>."
         "If the summary cannot be found, please return {{\"self_introduce\": \"\"}}。"
